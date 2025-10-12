@@ -1,11 +1,14 @@
+import os
 import importlib
 import pandas as pd
+
 from core.adapters import GodataAuth, GodataApiClient
 from core.base_processor import BaseProcessor, DefaultProcessor
 from core.mapper import Mapper
 from core.logger import logger  
-import json
-import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_URL = os.getenv("API_URL")
 API_TOKEN = os.getenv("API_TOKEN")
