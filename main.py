@@ -5,11 +5,12 @@ from core.base_processor import BaseProcessor, DefaultProcessor
 from core.mapper import Mapper
 from core.logger import logger  
 import json
+import os
 
-API_URL = "http://localhost:3000"
-API_TOKEN = "ujPztm4b7BxCneHCQoqv4vznsuhRTwj9rWg1Ub"
-API_USERNAME = "alvaroluz2001@gmail.com"
-API_PASSWORD = "godatasds2025"
+API_URL = os.getenv("API_URL")
+API_TOKEN = os.getenv("API_TOKEN")
+API_USERNAME = os.getenv("API_USERNAME")
+API_PASSWORD = os.getenv("API_PASSWORD")
 
 
 def run_pipeline(disease_name, repository):
