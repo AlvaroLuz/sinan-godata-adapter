@@ -24,10 +24,14 @@ class Hospitalization(str, Enum):
 # ===== Subestruturas ===== #
 
 @dataclass
-class DocumentObject:
+class Document:
     type: str
     number: str
 
+@dataclass
+class Age: 
+    years: int
+    months : Optional[int] = None 
 
 @dataclass
 class Address:
@@ -51,33 +55,37 @@ class DuplicateKeys:
 
 # ===== Estrutura principal ===== #
 
+
 @dataclass
 class DefaultCase:
+    #default do sinan
+    visualId: str
+    outbreakId: str
     firstName: str
-    lastName: str
     gender: str
-    wasContact: bool
-    outcomeId: str
-    safeBurial: bool
-    classification: Classification
-    riskLevel: str
-    transferRefused: bool
-    questionnaireAnswers: Dict[str, List[Dict[str, Any]]]
-    vaccinesReceived: List[Any]
     pregnancyStatus: str
-    outbreakId: Optional[str]
-    dob: Optional[datetime]
-    occupation: str
-    documents: List[DocumentObject]
+    documents: List[Document]
     addresses: List[Address]
-    duplicateKeys: DuplicateKeys
+    outcomeId: str
+    classification: Classification
     dateOfReporting: datetime
+    updatedAt: datetime
+    questionnaireAnswers: Dict[str, List[Dict[str, Any]]]
     dateOfOnset: Optional[datetime]
-    dateRanges: List[Any]
-    classificationHistory: List[Any]
+    lastName: Optional[str]
     age: Optional[Dict[str, int]] = None
+    dob: Optional[datetime] = None
+    #Opcionais 
+    transferRefused: Optional[bool] = False
+    duplicateKeys: Optional[DuplicateKeys] = DuplicateKeys(document=[], name=[])
+    dateRanges: Optional[List[Any]] = None
+    classificationHistory: Optional[List[Any]] = None
+    wasContact: Optional[bool] = False
+    safeBurial: Optional[bool] = False
+    riskLevel: Optional[str] = None
+    occupation: Optional[str] = None
+    vaccinesReceived: Optional[List[Any]] = None
     dateOfOutcome: Optional[datetime] = None
-    updatedAt: Optional[datetime] = None
     hasRelationships: Optional[bool] = None
     locations: Optional[List[Any]] = None
     address: Optional[Dict[str, Any]] = None

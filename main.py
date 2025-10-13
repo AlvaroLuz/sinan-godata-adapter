@@ -1,6 +1,7 @@
 import os
 import importlib
 import pandas as pd
+import logging 
 
 from core.adapters import GodataAuth, GodataApiClient
 from core.base_processor import BaseProcessor, DefaultProcessor
@@ -10,6 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger. setLevel(logging.DEBUG)
 API_URL = os.getenv("API_URL")
 API_TOKEN = os.getenv("API_TOKEN")
 API_USERNAME = os.getenv("API_USERNAME")
@@ -33,7 +35,7 @@ def run_pipeline(disease_name, repository):
     
     
     logger.info("Dados lidos, iniciando processamento")
-    mapper = Mapper(api_client, base_processor)
+    mapper = Mapper(api_client, base_processor, disease_module.QUESTIONNAIRE_MAPPING)
     df_mapped = mapper.run(df, outbreak_name="Sarampo")
     logger.info("Processamento concluído")
     try:
