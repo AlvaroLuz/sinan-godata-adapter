@@ -34,18 +34,16 @@ def run_pipeline(disease_name, repository):
     api_client = GodataApiClient(base_url=API_URL, token=token, session=auth.session)
     
     
-    logger.info("Dados lidos, iniciando processamento")
     mapper = Mapper(api_client, base_processor, disease_module.QUESTIONNAIRE_MAPPING)
     df_mapped = mapper.run(df, outbreak_name="Sarampo")
-    logger.info("Processamento concluído")
-    try:
-        reference_data = api_client.get_reference_data()
-        #reference_data = json.dumps(reference_data, indent=2)
-        reference_data = [ (item["value"] if "ADDRESS" in item["value"] else "") for item in reference_data]
-        logger.info("Dados de referência obtidos: %s", reference_data)
-    except ConnectionError as e:
-        logger.error("Erro ao obter dados de referência: %s", e)
-        return
+    # try:
+    #     reference_data = api_client.get_reference_data()
+    #     #reference_data = json.dumps(reference_data, indent=2)
+    #     reference_data = [ (item["value"] if "ADDRESS" in item["value"] else "") for item in reference_data]
+    #     logger.info("Dados de referência obtidos: %s", reference_data)
+    # except ConnectionError as e:
+    #     logger.error("Erro ao obter dados de referência: %s", e)
+    #     return
 
 
 if __name__ == "__main__":

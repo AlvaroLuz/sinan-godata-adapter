@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 from datetime import datetime
+
 from .logger import logger
 from .utils import string_to_iso_utc
 from .translation.registry import TranslationRegistry
@@ -23,8 +24,10 @@ class DefaultProcessor(BaseProcessor):
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self._apply_standard_treatment(df)
+        logger.info("Iniciando processamento específico da doença")
         df = self.disease_processor.run(df)
         df = self._normalize_disease_data(df)
+        logger.info("Processamento específico da doença concluído")
         return df
     
     # =====================================================
@@ -55,9 +58,7 @@ class DefaultProcessor(BaseProcessor):
     # =====================================================
     # === MÉTODOS AUXILIARES ==============================
     # =====================================================
-    
-    
-    #flags
+    #funcoes de normalizacao usando mapping para as flags do sistema do godata
     def _normalize_address_flag(self, df: pd.DataFrame) -> None:
         #alterar se for necessario novos tipos de endereco
         df["Endereço_Atual"] = self._map_address_type("Endereço Atual")
@@ -74,13 +75,11 @@ class DefaultProcessor(BaseProcessor):
         if "ID_CNS_SUS" in df.columns:
             df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(self._map_document_type)
 
-    #datetime
-    def _insert_timestamp(self, df: pd.DataFrame) -> None:
-        df["Atualizado_em"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
-
+    #funcoes que processam os dados
     def _process_birth_date(self, df: pd.DataFrame) -> None:
         if "DT_NASC" not in df.columns:
             df["DT_NASC"] = None
+            #descomentar essa linha quando estiver usando dados não anonimizados
             #df["IDADE"] = None
             return
 
@@ -108,6 +107,10 @@ class DefaultProcessor(BaseProcessor):
     def _calculate_age(self, birth_dates: pd.Series) -> pd.Series:
         today = pd.Timestamp.today()
         return ((today - birth_dates).dt.days / 365.25).round().astype("Int64")
+    
+    #timestamp simples
+    def _insert_timestamp(self, df: pd.DataFrame) -> None:
+        df["Atualizado_em"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     # =====================================================
     # === FUNÇÕES DE MAPEAMENTO (PADRÃO: _map_<campo>) ===
@@ -132,7 +135,6 @@ class DefaultProcessor(BaseProcessor):
 
     def _map_address_type(self, value: str) -> str:
         mapping = TranslationRegistry.get("address_type")
-        print(mapping)
         return mapping.get(value, "")
 
     

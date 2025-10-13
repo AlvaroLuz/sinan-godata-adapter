@@ -16,10 +16,6 @@ class Classification(str, Enum):
     Suspect = "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_SUSPECT"
     Descartado = "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_NOT_A_CASE_DISCARDED"
 
-class Hospitalization(str, Enum):
-    Isolation = "LNG_REFERENCE_DATA_CATEGORY_PERSON_DATE_TYPE_ISOLATION"
-    Hospitalization = "LNG_REFERENCE_DATA_CATEGORY_PERSON_DATE_TYPE_HOSPITALIZATION"
-
 
 # ===== Subestruturas ===== #
 
@@ -91,41 +87,6 @@ class DefaultCase:
     address: Optional[Dict[str, Any]] = None
     numberOfContacts: Optional[int] = None
     numberOfExposures: Optional[int] = None
-
-
-# default_case = DefaultCase(
-#     firstName="",
-#     lastName="",
-#     gender=Gender.Empty,
-#     wasContact=False,
-#     outcomeId="",
-#     safeBurial=False,
-#     classification=Classification.Confirmed,
-#     riskLevel="",
-#     transferRefused=False,
-#     questionnaireAnswers={},
-#     vaccinesReceived=[],
-#     pregnancyStatus=PregnancyStatus.None_,
-#     outbreakId=os.getenv("OUTBREAK_ID"),
-#     dob=None,
-#     occupation="",
-#     documents=[DocumentObject(type=DocumentType.Empty, number="")],
-#     addresses=[
-#         Address(
-#             typeId="LNG_REFERENCE_DATA_CATEGORY_ADDRESS_TYPE_USUAL_PLACE_OF_RESIDENCE",
-#             addressLine1="",
-#             locationId="a042112a-518e-4414-bcc1-5a187da0e47b",
-#             geoLocationAccurate=False,
-#             date=None,
-#         )
-#     ],
-#     duplicateKeys=DuplicateKeys(document=[], name=[]),
-#     dateOfReporting=actual_date,
-#     dateOfOnset=None,
-#     dateRanges=[],
-#     classificationHistory=[],
-#     age=None
-# )
 
 
 # ===== Exportar para JSON ===== #

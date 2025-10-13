@@ -27,20 +27,22 @@ class Mapper:
     
     def _map_default_case(self, df: pd.DataFrame) -> pd.DataFrame:
         #preprocessando os dados
+        logger.info("Iniciando preprocessamento dos dados")
         df = self.processor.run(df) 
-
+        logger.info("Preprocessamento concluído")
+        logger.info("Iniciando mapeamento dos dados para notificação")
         #mapeando os dados
-        for _ , row in df.iterrows():
-            
-            for column in df.columns:
-                if pd.notna(row[column]):
-                    logger.debug("Coluna %s (%s): %s", column,type(row[column]), row[column])
+        for i, row in df.iterrows():
+            logger.info("Processando linha: (%s/%s)", i+1, len(df))
+            # for column in df.columns:
+            #     if pd.notna(row[column]):
+            #         logger.debug("Coluna %s (%s): %s", column,type(row[column]), row[column])
 
             case = self._case_from_row(row)
             try:
                 adapter = TypeAdapter(DefaultCase)
                 case_out = adapter.dump_json(case, indent=2).decode()
-                logger.info("Caso mapeado para notificação: %s", case_out)
+                logger.debug("Caso mapeado para notificação: %s", case_out)
             except Exception as e:
                 logger.error("Erro ao mapear caso: %s", e)
     
