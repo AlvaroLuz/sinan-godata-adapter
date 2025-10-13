@@ -72,8 +72,8 @@ class DefaultCase:
     updatedAt: datetime
     questionnaireAnswers: Dict[str, List[Dict[str, Any]]]
     dateOfOnset: Optional[datetime]
-    lastName: Optional[str]
-    age: Optional[Dict[str, int]] = None
+    lastName: Optional[str] = None
+    age: Optional[Age] = None#Optional[Dict[str, int]] = None
     dob: Optional[datetime] = None
     #Opcionais 
     transferRefused: Optional[bool] = False

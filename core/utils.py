@@ -39,4 +39,4 @@ def string_to_iso_utc(date_str: str) -> str:
         else:
             dt = dt.astimezone(timezone.utc)
         
-        return dt
+        return dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
