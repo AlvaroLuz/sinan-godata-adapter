@@ -18,8 +18,7 @@ class DiseaseProcessor:
         Returns:
             str: data no formato 'YYYY-MM-DDTHH:MM:SS.mmmZ'
         """
-        if pd.isna(date_str):
-            return ""
+
         
         date_str = date_str.strip()
         

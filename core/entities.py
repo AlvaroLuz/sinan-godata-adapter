@@ -8,16 +8,7 @@ from typing import List, Optional, Dict, Any
 import os
 import json
 
-# ===== Enums ===== #
 
-
-class Classification(str, Enum):
-    Confirmed = "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_CONFIRMED"
-    Suspect = "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_SUSPECT"
-    Descartado = "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_NOT_A_CASE_DISCARDED"
-
-
-# ===== Subestruturas ===== #
 
 @dataclass
 class Document:
@@ -63,7 +54,7 @@ class DefaultCase:
     documents: List[Document]
     addresses: List[Address]
     outcomeId: str
-    classification: Classification
+    classification: str
     dateOfReporting: datetime
     updatedAt: datetime
     questionnaireAnswers: Dict[str, List[Dict[str, Any]]]

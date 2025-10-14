@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from pandas import isna
 import re
 
 def string_to_iso_utc(date_str: str) -> str:
@@ -14,7 +15,11 @@ def string_to_iso_utc(date_str: str) -> str:
         Returns:
             str: data no formato 'YYYY-MM-DDTHH:MM:SS.mmmZ'
         """
+        
         date_str = date_str.strip()
+        
+        if date_str == "" or date_str is None or date_str.lower() == "nan":
+            return ""
         
         ISO_Z_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
         # Se já estiver em ISO Z, converte direto para datetime

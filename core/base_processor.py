@@ -37,13 +37,17 @@ class DefaultProcessor(BaseProcessor):
         logger.info("Iniciando tratamento padrão dos dados")
 
         df = df.copy()
+        #removing rows without notification number
+        df = df.dropna(subset=["NU_NOTIFIC"])
+        #removing nan values
+        df = df.fillna("")
         
         #setting godata flags as data
         self._normalize_address_flag(df)
         self._normalize_gender(df)
         self._normalize_pregnancy(df)
         self._normalize_document_type(df)
-        
+        self._normalize_classification(df)
         #processing information
         self._process_birth_date(df)
         self._process_notification_dates(df)
@@ -74,7 +78,9 @@ class DefaultProcessor(BaseProcessor):
     def _normalize_document_type(self, df: pd.DataFrame) -> None:
         if "ID_CNS_SUS" in df.columns:
             df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(self._map_document_type)
-
+    def _normalize_classification(self, df: pd.DataFrame) -> None:
+        if "CLASSIFICAÇÃO FINAL" in df.columns:
+            df["CLASSIFICAÇÃO FINAL"] = df["CLASSIFICAÇÃO FINAL"].apply(self._map_classification)
     #funcoes que processam os dados
     def _process_birth_date(self, df: pd.DataFrame) -> None:
         if "DT_NASC" not in df.columns:
@@ -137,7 +143,10 @@ class DefaultProcessor(BaseProcessor):
         mapping = TranslationRegistry.get("address_type")
         return mapping.get(value, "")
 
-    
+    def _map_classification(self, value: str) -> str:
+        mapping = TranslationRegistry.get("classification")
+        return mapping.get(value, "")
+
     # def _standard_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
     #     # Implement standard data processing steps here
     #     logger.info("Iniciando tratamento padrão dos dados")

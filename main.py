@@ -23,8 +23,9 @@ def run_pipeline(disease_name, repository):
     disease_module = importlib.import_module(f"diseases.{disease_name}")
     logger.info("Módulo da doença carregado: %s", disease_module)
 
+    lines_to_treat = None  # None para ler todas as linhas
     logger.info("Lendo dados do repositório: %s", repository)
-    df = pd.read_excel(repository, nrows=1,dtype=str)
+    df = pd.read_excel(repository, nrows=lines_to_treat,dtype=str)
 
     processor = BaseProcessor.register(disease_module.DiseaseProcessor)
     base_processor = DefaultProcessor(processor())

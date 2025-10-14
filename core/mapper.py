@@ -6,7 +6,7 @@ from typing import Dict, List, Any
 
 from .adapters.api_client import GodataApiClient
 from .base_processor import DefaultProcessor
-from .entities import DefaultCase, Address, Document, Age, Classification
+from .entities import DefaultCase, Address, Document, Age
 from .logger import logger
 
 class Mapper: 
@@ -30,21 +30,23 @@ class Mapper:
         logger.info("Iniciando preprocessamento dos dados")
         df = self.processor.run(df) 
         logger.info("Preprocessamento concluído")
-        logger.info("Iniciando mapeamento dos dados para notificação")
-        #mapeando os dados
-        for i, row in df.iterrows():
-            logger.info("Processando linha: (%s/%s)", i+1, len(df))
-            # for column in df.columns:
-            #     if pd.notna(row[column]):
-            #         logger.debug("Coluna %s (%s): %s", column,type(row[column]), row[column])
 
-            case = self._case_from_row(row)
+        #mapeando os dados
+        logger.info("Iniciando mapeamento dos dados para notificação")
+        for i, row in df.iterrows():
+            logger.info("Processando linha: (%s/%s)", i+1, len(df))            
             try:
+                case = self._case_from_row(row)
                 adapter = TypeAdapter(DefaultCase)
                 case_out = adapter.dump_json(case, indent=2).decode()
                 logger.debug("Caso mapeado para notificação: %s", case_out)
+                
             except Exception as e:
-                logger.error("Erro ao mapear caso: %s", e)
+                for column in df.columns:
+                    if pd.notna(row[column]):
+                        logger.debug("Coluna %s (%s): %s", column,type(row[column]), row[column])
+                logger.error("Erro ao mapear caso %s: %s", i, e)
+                continue
     
     def _get_outbreak_id(self, outbreak_name: str):
         outbreaks= self.api_client.get_outbreaks()
@@ -66,7 +68,9 @@ class Mapper:
             firstName=row.get("NM_PACIENT", "Lorem Ipsum"),
             gender=row.get("CS_SEXO"),
             pregnancyStatus=row.get("CS_GESTANT"),
-        age=Age(years=row.get("IDADE")),
+        age=Age(
+            years=int(row.get("IDADE"))
+        )if row.get("IDADE") != "" else None,
         #dob=row.get("DT_NASC", None),
         outbreakId = self.outbreak_id,
         addresses=[
@@ -85,7 +89,7 @@ class Mapper:
             )
         ],
         outcomeId=row.get("EVOLUCAO"),
-        classification=Classification[row.get("CLASSIFICAÇÃO FINAL")],
+        classification=row.get("CLASSIFICAÇÃO FINAL"),
         dateOfReporting=row.get("DT_NOTIFIC"),
         dateOfOnset=row.get("DT_SIN_PRI"),
         updatedAt=row.get("Atualizado_em"),
