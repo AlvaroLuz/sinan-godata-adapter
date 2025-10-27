@@ -5,12 +5,12 @@ from pydantic import TypeAdapter
 from typing import Dict, List, Any
 
 from .adapters.api_client import GodataApiClient
-from .base_processor import DefaultProcessor
-from .entities import DefaultCase, Address, Document, Age
+from .sinan_processor import SinanDataProcessor
+from .entities import SinanCase, Address, Document, Age
 from .logger import logger
 
-class Mapper: 
-    def __init__(self, api_client: GodataApiClient, processor: DefaultProcessor, questionnaire_mapping: dict): 
+class AddSinanCaseService: 
+    def __init__(self, api_client: GodataApiClient, processor: SinanDataProcessor, questionnaire_mapping: dict): 
         self.api_client = api_client
         self.processor = processor
         self.questionnaire_mapping = questionnaire_mapping
@@ -37,7 +37,7 @@ class Mapper:
             logger.info("Processando linha: (%s/%s)", i+1, len(df))            
             try:
                 case = self._case_from_row(row)
-                adapter = TypeAdapter(DefaultCase)
+                adapter = TypeAdapter(SinanCase)
                 case_out = adapter.dump_json(case, indent=2).decode()
                 logger.debug("Caso mapeado para notificação: %s", case_out)
                 
@@ -61,9 +61,9 @@ class Mapper:
             answers[key] = [{"value": row.get(value)}]
         return answers
 
-    
-    def _case_from_row(self, row: pd.Series) -> DefaultCase:
-        return DefaultCase(
+
+    def _case_from_row(self, row: pd.Series) -> SinanCase:
+        return SinanCase(
             visualId=row.get("NU_NOTIFIC"),
             firstName=row.get("NM_PACIENT", "Lorem Ipsum"),
             gender=row.get("CS_SEXO"),

@@ -44,7 +44,7 @@ class DuplicateKeys:
 
 
 @dataclass
-class DefaultCase:
+class SinanCase:
     #default do sinan
     visualId: str
     outbreakId: str

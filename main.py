@@ -4,8 +4,8 @@ import pandas as pd
 import logging 
 
 from core.adapters import GodataAuth, GodataApiClient
-from core.base_processor import BaseProcessor, DefaultProcessor
-from core.mapper import Mapper
+from core.sinan_processor import BaseProcessor, SinanDataProcessor
+from core.add_sinan_case import AddSinanCaseService
 from core.logger import logger  
 from dotenv import load_dotenv
 
@@ -28,14 +28,14 @@ def run_pipeline(disease_name, repository):
     df = pd.read_excel(repository, nrows=lines_to_treat,dtype=str)
 
     processor = BaseProcessor.register(disease_module.DiseaseProcessor)
-    base_processor = DefaultProcessor(processor())
+    base_processor = SinanDataProcessor(processor())
 
     auth = GodataAuth(API_URL, API_TOKEN)
     token = auth.login(username=API_USERNAME, password=API_PASSWORD)
     api_client = GodataApiClient(base_url=API_URL, token=token, session=auth.session)
     
     
-    mapper = Mapper(api_client, base_processor, disease_module.QUESTIONNAIRE_MAPPING)
+    mapper = AddSinanCaseService(api_client, base_processor, disease_module.QUESTIONNAIRE_MAPPING)
     df_mapped = mapper.run(df, outbreak_name="Sarampo")
     # try:
     #     reference_data = api_client.get_reference_data()

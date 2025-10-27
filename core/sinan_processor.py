@@ -11,7 +11,7 @@ class BaseProcessor(ABC):
     def run(self, df: pd.DataFrame) -> pd.DataFrame :
         pass
 
-class DefaultProcessor(BaseProcessor):
+class SinanDataProcessor(BaseProcessor):
     def __init__(self, disease_processor: BaseProcessor):
         self.disease_processor = disease_processor
     
@@ -42,12 +42,9 @@ class DefaultProcessor(BaseProcessor):
         #removing nan values
         df = df.fillna("")
         
-        #setting godata flags as data
-        self._normalize_address_flag(df)
-        self._normalize_gender(df)
-        self._normalize_pregnancy(df)
-        self._normalize_document_type(df)
-        self._normalize_classification(df)
+        #translating csv data to godata keywords
+        self._translate_keywords(df)
+        
         #processing information
         self._process_birth_date(df)
         self._process_notification_dates(df)
@@ -62,25 +59,66 @@ class DefaultProcessor(BaseProcessor):
     # =====================================================
     # === MÉTODOS AUXILIARES ==============================
     # =====================================================
-    #funcoes de normalizacao usando mapping para as flags do sistema do godata
-    def _normalize_address_flag(self, df: pd.DataFrame) -> None:
-        #alterar se for necessario novos tipos de endereco
-        df["Endereço_Atual"] = self._map_address_type("Endereço Atual")
+    def _translate_keywords(self, df: pd.DataFrame) -> None:
+        normalization_map = {
+            "CS_SEXO": {
+                "mapper": self._map_generic,
+                "registry_key": "gender",
+            },
+            "CS_GESTANT": {
+                "mapper": self._map_generic,
+                "registry_key": "pregnancy_status",
+                "default": TranslationRegistry.get("pregnancy_status").get("9", ""),
+            },
+            "ID_CNS_SUS": {
+                "mapper": self._map_document_type,
+            },
+            "CLASSIFICAÇÃO FINAL": {
+                "mapper": self._map_generic,
+                "registry_key": "classification",
+            },
+            "Endereço_Atual": {
+                "default": TranslationRegistry.get("address_type").get("Endereço Atual", "")
+            },
+            "ID_CNS_SUS": {
+                "mapper": self._map_document_type,
+                "target": "TIPO DE DOCUMENTO",
+                "registry_key": "document_type",
+            },
+        }
 
-    def _normalize_gender(self, df: pd.DataFrame) -> None:
-        if "CS_SEXO" in df.columns:
-            df["CS_SEXO"] = df["CS_SEXO"].apply(self._map_gender)
+        for col, cfg in normalization_map.items():
+            if col not in df.columns:
+                continue
+            
+            logger.info("distribuição dos valores para coluna %s antes da normalização:\n %s", col, df[col].value_counts())
+            if "mapper" in cfg:
+                newvalue = df[col].apply(
+                    lambda v: 
+                        cfg["mapper"](
+                            v,
+                            cfg.get("registry_key"),
+                        cfg.get("default", ""),
+                    )
+                )
+            else:
+                newvalue = cfg["default"]
+            
+            if "target" in cfg:
+                df[cfg["target"]] = newvalue
+            else: 
+                df[col] = newvalue
 
-    def _normalize_pregnancy(self, df: pd.DataFrame) -> None:
-        if "CS_GESTANT" in df.columns:
-            df["CS_GESTANT"] = df["CS_GESTANT"].apply(self._map_pregnancy_status)
+    def _map_generic(self, value: str, registry_key: str, default: str = "") -> str:
+        mapping = TranslationRegistry.get(registry_key)
+        return mapping.get(value, default)
 
-    def _normalize_document_type(self, df: pd.DataFrame) -> None:
-        if "ID_CNS_SUS" in df.columns:
-            df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(self._map_document_type)
-    def _normalize_classification(self, df: pd.DataFrame) -> None:
-        if "CLASSIFICAÇÃO FINAL" in df.columns:
-            df["CLASSIFICAÇÃO FINAL"] = df["CLASSIFICAÇÃO FINAL"].apply(self._map_classification)
+    def _map_document_type(self, value: str, registry_key:str, default: str = "") -> str:
+        mapping = TranslationRegistry.get(registry_key)
+        return (
+            mapping.get("CNS") if str(value).strip() != "" else default
+        )
+  
     #funcoes que processam os dados
     def _process_birth_date(self, df: pd.DataFrame) -> None:
         if "DT_NASC" not in df.columns:
@@ -100,9 +138,11 @@ class DefaultProcessor(BaseProcessor):
 
     def _build_full_address(self, df: pd.DataFrame) -> None:
         required_cols = ["NM_BAIRRO", "NM_LOGRADO", "NU_NUMERO", "NM_COMPLEM"]
+        
         for col in required_cols:
             if col not in df.columns:
                 df[col] = ""
+        
         df["ENDEREÇO COMPLETO"] = (
             df[required_cols]
             .fillna("")
@@ -118,34 +158,7 @@ class DefaultProcessor(BaseProcessor):
     def _insert_timestamp(self, df: pd.DataFrame) -> None:
         df["Atualizado_em"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
-    # =====================================================
-    # === FUNÇÕES DE MAPEAMENTO (PADRÃO: _map_<campo>) ===
-    # =====================================================
-    def _map_gender(self, value: str) -> str:
-        mapping = TranslationRegistry.get("gender")
-        return mapping.get(value, "")
 
-    def _map_pregnancy_status(self, value: str) -> str:
-        mapping = TranslationRegistry.get("pregnancy_status")
-        return mapping.get(
-            value, "LNG_REFERENCE_DATA_CATEGORY_PREGNANCY_STATUS_NONE"
-        )
-
-    def _map_document_type(self, value: str) -> str:
-        mapping = TranslationRegistry.get("document_type")
-        return (
-            mapping.get("CNS")
-            if pd.notna(value) and str(value).strip() != ""
-            else ""
-        )
-
-    def _map_address_type(self, value: str) -> str:
-        mapping = TranslationRegistry.get("address_type")
-        return mapping.get(value, "")
-
-    def _map_classification(self, value: str) -> str:
-        mapping = TranslationRegistry.get("classification")
-        return mapping.get(value, "")
 
     # def _standard_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
     #     # Implement standard data processing steps here
