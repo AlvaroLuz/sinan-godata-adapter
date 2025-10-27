@@ -19,38 +19,39 @@ class SinanDataProcessor(BaseProcessor):
     # === MÉTODO PRINCIPAL ================================
     # =====================================================
 
-    def _normalize_disease_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _disease_data_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
+        ## TODO: rodar o tratamento específico da doença aqui
         return df
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self._apply_standard_treatment(df)
+        df = self._standard_data_treatment(df)
         logger.info("Iniciando processamento específico da doença")
         df = self.disease_processor.run(df)
-        df = self._normalize_disease_data(df)
+        df = self._disease_data_treatment(df)
         logger.info("Processamento específico da doença concluído")
         return df
     
     # =====================================================
     # === TRATAMENTO PADRÃO ===============================
     # =====================================================
-    def _apply_standard_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _standard_data_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
         logger.info("Iniciando tratamento padrão dos dados")
 
         df = df.copy()
-        #removing rows without notification number
+        #remover linhas sem numero de notificacao
         df = df.dropna(subset=["NU_NOTIFIC"])
-        #removing nan values
+        #remover valores nan
         df = df.fillna("")
         
-        #translating csv data to godata keywords
+        #traduzindo dados do csv para palavras-chave do godata
         self._translate_keywords(df)
         
-        #processing information
+        #processar dados especificos
         self._process_birth_date(df)
         self._process_notification_dates(df)
         self._build_full_address(df)
         
-        #inserting timestamp
+        #inserir timestamp de atualizacao
         self._insert_timestamp(df)
 
         logger.info("Tratamento padrão dos dados concluído")
@@ -91,7 +92,6 @@ class SinanDataProcessor(BaseProcessor):
             if col not in df.columns:
                 continue
             
-            logger.info("distribuição dos valores para coluna %s antes da normalização:\n %s", col, df[col].value_counts())
             if "mapper" in cfg:
                 newvalue = df[col].apply(
                     lambda v: 
@@ -158,78 +158,9 @@ class SinanDataProcessor(BaseProcessor):
     def _insert_timestamp(self, df: pd.DataFrame) -> None:
         df["Atualizado_em"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
-
-
-    # def _standard_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
-    #     # Implement standard data processing steps here
-    #     logger.info("Iniciando tratamento padrão dos dados")
     
     #     #------ não precisa de tratamento ------------  ----
     #     # (dados pessoais)- talvez garantir que não fique nulo
     #     # "NM_PACIENT", "NU_CEP", "NU_TELEFON","ID_CNS_SUS" 
     #     # ------------------------------------------------
         
-    #     # não precisa de tratamento? adicionar prefixo do caso, se precisar
-    #     # "NU_NOTIFIC",
-
-    #     # --- flags do godata ---
-    #     # "Endereço_Atual" 
-    #     df["Endereço Atual"] = self._get_current_address_type()
-    #     # "CS_SEXO"
-    #     df["CS_SEXO"] = df["CS_SEXO"].apply(self._treat_gender)
-    #     # "CS_GESTANT"
-    #     df["CS_GESTANT"] = df["CS_GESTANT"].apply(self._treat_pregnancy)
-    #     # "TIPO DE DOCUMENTO"
-    #     df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(self._treat_document)
-    #     # -----------------------
-
-    #     # --- TIMESTAMPS --- 
-    #     # "Atualizado_em"
-    #     df["Atualizado_em"] = self._insert_timestamp()
-        
-    #     # "DT_NASC"
-    #     if "DT_NASC" not in df.columns:
-    #         df["DT_NASC"] = None
-    #     else:
-    #         df["DT_NASC"] = pd.to_datetime(df["DT_NASC"], errors="coerce").strftime("%Y-%m-%dT%H:%M:%S.000Z")
-    #         # "IDADE"
-    #         hoje = datetime.today()
-    #         df["IDADE"] = (
-    #             (hoje - df["DT_NASC"]).dt.days / 365.25
-    #         ).round().astype("Int64")
-        
-    #     # "DT_SIN_PRI","DT_NOTIFIC" 
-    #     df["DT_SIN_PRI"] = df["DT_SIN_PRI"].apply(string_to_iso_utc)
-    #     df["DT_NOTIFIC"] = df["DT_NOTIFIC"].apply(string_to_iso_utc)
-    #     #---------------------
-
-        
-    #     # --- Criação do Endereço Completo ---
-    #     # "MUNICIPIO RESIDÊNCIA"
-    #     # "ENDEREÇO COMPLETO"
-    #     df["ENDEREÇO COMPLETO"] = (
-    #         df[["NM_BAIRRO", "NM_LOGRADO", "NU_NUMERO", "NM_COMPLEM"]]
-    #         .fillna("")
-    #         .agg(", ".join, axis=1)
-    #         .str.strip(", ")
-    #     )
-    #     # ---------------------
-    
-    #     print(df)
-    #     logger.info("Tratamento padrão dos dados concluído")
-    #     #df = df.fillna("")
-
-    #     # # --- Arrumar Municipio de Residencia ---
-    #     # dic_mun_res = pd.read_excel("Dic_Mun_Res.xlsx")
-    #     # tabela_merge = pd.merge(df, dic_mun_res, on="ID_MN_RESI", how="left")
-
-    #     # # --- Arrumar Municipio de Notificação ---
-    #     # dic_mun_not = pd.read_excel("Dic_Mun_NOT.xlsx")
-    #     # tabela_merge2 = pd.merge(tabela_merge, dic_mun_not, on="ID_MUNICIP", how="left")
-
-    #     # --- Substituir NAs por string vazia ---
-    #     #tabela_merge2 = tabela_merge2.fillna("")
-
-    #     #tabela_merge2.to_csv(caminho_arquivo, index=False)
-
-    #     return df
