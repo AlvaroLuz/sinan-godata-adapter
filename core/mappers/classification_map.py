@@ -1,10 +1,9 @@
-from .registry import TranslationRegistry
+from .translation_registry import TranslationRegistry
 
 CLASSIFICATION_MAP ={
     "Confirmado" : "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_CONFIRMED",
     "Suspeito" : "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_SUSPECT",
     "Descartado" : "LNG_REFERENCE_DATA_CATEGORY_CASE_CLASSIFICATION_NOT_A_CASE_DISCARDED",
-    "": ""
 }
 
 TranslationRegistry.register("classification", CLASSIFICATION_MAP)

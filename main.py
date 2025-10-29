@@ -4,8 +4,9 @@ import pandas as pd
 import logging 
 
 from core.adapters import GodataAuth, GodataApiClient
-from core.sinan_processor import BaseProcessor, SinanDataProcessor
+from core.sinan_processor import Processor, SinanDataProcessor
 from core.add_sinan_case import AddSinanCaseService
+from core.sinan_case_mapper import SinanCaseMapper
 from core.logger import logger  
 from dotenv import load_dotenv
 
@@ -26,17 +27,33 @@ def run_pipeline(disease_name, repository):
     lines_to_treat = None  # None para ler todas as linhas
     logger.info("Lendo dados do repositório: %s", repository)
     df = pd.read_excel(repository, nrows=lines_to_treat,dtype=str)
+    logger.info("Dados lidos com sucesso: %s linhas", len(df))
 
-    processor = BaseProcessor.register(disease_module.DiseaseProcessor)
-    base_processor = SinanDataProcessor(processor())
 
+    #processamento padrao dos dados
+    standard_processor = SinanDataProcessor()
+    df = standard_processor.run(df)
+
+    #processamento especifico da doença
+    logger.info("Iniciando processamento específico para a doença: %s", disease_name)
+    processor = Processor.register(disease_module.DiseaseProcessor)
+    disease_processor = processor()
+    #df = disease_processor.run(df)
+    logger.info("Processamento específico concluído.")
+
+    #mapeamento dos dados
+    mapper = SinanCaseMapper(questionnaire_mapping=disease_module.QUESTIONNAIRE_MAPPING)
+    cases = mapper.run(df)
+    
+    
+
+    #configurando cliente da API
     auth = GodataAuth(API_URL, API_TOKEN)
     token = auth.login(username=API_USERNAME, password=API_PASSWORD)
     api_client = GodataApiClient(base_url=API_URL, token=token, session=auth.session)
     
-    
-    mapper = AddSinanCaseService(api_client, base_processor, disease_module.QUESTIONNAIRE_MAPPING)
-    df_mapped = mapper.run(df, outbreak_name="Sarampo")
+    service = AddSinanCaseService(api_client, disease_module.QUESTIONNAIRE_MAPPING)
+    #service.run(cases)
     # try:
     #     reference_data = api_client.get_reference_data()
     #     #reference_data = json.dumps(reference_data, indent=2)

@@ -1,6 +1,9 @@
 from typing import Any, Optional, Dict, List
+from pydantic import TypeAdapter
 import pandas as pd
+
 from .entities import SinanCase, Address, Document, Age
+from .logger import logger
 
 class SinanCaseMapper:
     """Classe responsável por converter uma linha do DataFrame em um objeto DefaultCase."""
@@ -25,17 +28,38 @@ class SinanCaseMapper:
         "NU_NOTIFIC": "",
     }
 
-    def __init__(self, outbreak_id: str, questionnaire_mapping: Optional[dict] = None):
-        self.outbreak_id = outbreak_id
+    def __init__(self,questionnaire_mapping: Optional[dict] = None):
         self.questionnaire_mapping = questionnaire_mapping
 
-    # 🔹 Helper genérico reutilizável
+    #  Função principal
+    def run(self, df: pd.DataFrame) -> List[SinanCase]:
+        #mapeando os dados
+        logger.info("Iniciando mapeamento dos dados para notificação")
+        cases = []
+        for i, row in df.iterrows():
+
+            logger.info("Processando linha: (%s/%s)", i+1, len(df))            
+            try:
+                case = self._case_from_row(row)
+                adapter = TypeAdapter(SinanCase)
+                case_out = adapter.dump_json(case, indent=2).decode()
+                logger.debug("Caso mapeado para notificação: %s", case_out)
+            except Exception as e:
+                logger.error("Erro ao mapear linha (%s/%s): %s", i+1, len(df), e)
+                continue
+            
+            cases.append(case)
+            
+        logger.info("Mapeamento concluído: %s casos mapeados.", len(cases))
+
+        return cases
+    
+    #  Helper genérico reutilizável
     def _get_field_value(self, row: pd.Series, field: str) -> Optional[Any]:
         """Obtém um valor de uma linha com fallback para defaults e tratamento de NaN."""
         val = row.get(field, self._DEFAULTS.get(field))
         return self._DEFAULTS.get(field) if pd.isna(val) or val == "" else val
 
-    # 🔹 Função principal
     def _case_from_row(self, row: pd.Series) -> SinanCase:
         """Cria um objeto SinanCase a partir de uma linha do DataFrame."""
 
@@ -64,7 +88,6 @@ class SinanCaseMapper:
             gender=self._get_field_value(row, "CS_SEXO"),
             pregnancyStatus=self._get_field_value(row, "CS_GESTANT"),
             age=Age(years=int(idade)) if idade not in (None, "", "NaN") else None,
-            outbreakId=self.outbreak_id,
             addresses=build_address(),
             documents= build_document(),
             outcomeId=self._get_field_value(row, "EVOLUCAO"),
@@ -81,3 +104,5 @@ class SinanCaseMapper:
             answers[key] = [{"value": row.get(value)}]
         return answers
 
+
+        

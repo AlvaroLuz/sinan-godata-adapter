@@ -69,7 +69,7 @@ class DiseaseProcessor:
         df["EVOLUCAO"] = df["EVOLUCAO"].map(evolucao_map).fillna("")
         # --- Criar coluna CLASSIFICACAO_FINAL ---
         # "CLASSIFICAÇÃO FINAL",
-        classificacao_final_map = {"1": "SARAMPO", "2": "RUBEOLA", "3": "DISCARDED", "": ""}
+        classificacao_final_map = {"1": "Confirmado", "2": "Confirmado", "3": "Descartado", "": ""}
         df["CLASSIFICACAO_FINAL"] = df["EVOLUCAO"].map(classificacao_final_map).fillna("")
 
         return df

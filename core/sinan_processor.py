@@ -4,37 +4,20 @@ from datetime import datetime
 
 from .logger import logger
 from .utils import string_to_iso_utc
-from .translation.registry import TranslationRegistry
+from .mappers.translation_registry import TranslationRegistry
 
-class BaseProcessor(ABC):
+class Processor(ABC):
     @abstractmethod
     def run(self, df: pd.DataFrame) -> pd.DataFrame :
         pass
 
-class SinanDataProcessor(BaseProcessor):
-    def __init__(self, disease_processor: BaseProcessor):
-        self.disease_processor = disease_processor
-    
+class SinanDataProcessor(Processor):
+     
     # =====================================================
     # === MÉTODO PRINCIPAL ================================
     # =====================================================
 
-    def _disease_data_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
-        ## TODO: rodar o tratamento específico da doença aqui
-        return df
-
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self._standard_data_treatment(df)
-        logger.info("Iniciando processamento específico da doença")
-        df = self.disease_processor.run(df)
-        df = self._disease_data_treatment(df)
-        logger.info("Processamento específico da doença concluído")
-        return df
-    
-    # =====================================================
-    # === TRATAMENTO PADRÃO ===============================
-    # =====================================================
-    def _standard_data_treatment(self, df: pd.DataFrame) -> pd.DataFrame:
         logger.info("Iniciando tratamento padrão dos dados")
 
         df = df.copy()
@@ -56,6 +39,7 @@ class SinanDataProcessor(BaseProcessor):
 
         logger.info("Tratamento padrão dos dados concluído")
         return df
+    
 
     # =====================================================
     # === MÉTODOS AUXILIARES ==============================
@@ -63,62 +47,37 @@ class SinanDataProcessor(BaseProcessor):
     def _translate_keywords(self, df: pd.DataFrame) -> None:
         normalization_map = {
             "CS_SEXO": {
-                "mapper": self._map_generic,
                 "registry_key": "gender",
             },
             "CS_GESTANT": {
-                "mapper": self._map_generic,
                 "registry_key": "pregnancy_status",
-                "default": TranslationRegistry.get("pregnancy_status").get("9", ""),
-            },
-            "ID_CNS_SUS": {
-                "mapper": self._map_document_type,
             },
             "CLASSIFICAÇÃO FINAL": {
-                "mapper": self._map_generic,
                 "registry_key": "classification",
             },
-            "Endereço_Atual": {
-                "default": TranslationRegistry.get("address_type").get("Endereço Atual", "")
-            },
-            "ID_CNS_SUS": {
-                "mapper": self._map_document_type,
-                "target": "TIPO DE DOCUMENTO",
-                "registry_key": "document_type",
-            },
+            
         }
 
         for col, cfg in normalization_map.items():
             if col not in df.columns:
                 continue
-            
-            if "mapper" in cfg:
-                newvalue = df[col].apply(
-                    lambda v: 
-                        cfg["mapper"](
-                            v,
-                            cfg.get("registry_key"),
-                        cfg.get("default", ""),
-                    )
-                )
-            else:
-                newvalue = cfg["default"]
-            
+        
+            newvalue = df[col].apply(
+                lambda value: TranslationRegistry.translate(cfg["registry_key"], value)
+            )
+
             if "target" in cfg:
                 df[cfg["target"]] = newvalue
             else: 
                 df[col] = newvalue
-
-    def _map_generic(self, value: str, registry_key: str, default: str = "") -> str:
-        mapping = TranslationRegistry.get(registry_key)
-        return mapping.get(value, default)
-
-    def _map_document_type(self, value: str, registry_key:str, default: str = "") -> str:
-        mapping = TranslationRegistry.get(registry_key)
-        return (
-            mapping.get("CNS") if str(value).strip() != "" else default
+        
+        df["Endereço_Atual"] = TranslationRegistry.translate("address_type", "Endereço Atual")
+        
+        df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(
+            lambda x: 
+                pd.NA if x=="" else  TranslationRegistry.translate("document_type", "CNS")
         )
-  
+
     #funcoes que processam os dados
     def _process_birth_date(self, df: pd.DataFrame) -> None:
         if "DT_NASC" not in df.columns:

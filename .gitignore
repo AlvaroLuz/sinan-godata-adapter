@@ -3,6 +3,5 @@
 *__pycache__/
 *.xlsx
 *.env
+*.json
 
-*input/*
-*output/*

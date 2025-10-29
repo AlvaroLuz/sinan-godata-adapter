@@ -1,40 +1,55 @@
+import logging
 import requests
-from typing import Optional
+from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class GoDataApiError(Exception):
+    """Exceção personalizada para erros da API Go.Data."""
+    pass
+
 
 class GodataApiClient:
+    """Cliente HTTP para comunicação com a API Go.Data."""
+
     def __init__(self, base_url: str, token: str, session: Optional[requests.Session] = None):
-        self.base_url = base_url
-        self.access_token = token
+        self.base_url = base_url.rstrip("/")
+        self.token = token
         self.session = session or requests.Session()
 
-    def _auth_params(self):
-        return {"access_token": self.access_token}
+    # --- Métodos utilitários internos ---
 
-    def get_outbreaks(self):
-        url = f"{self.base_url}/api/outbreaks"
-        response = self.session.get(url, params=self._auth_params())
-        if response.ok:
-            return response.json()
-        raise ConnectionError(f"Erro ao buscar surtos: {response.status_code}")
+    def _auth_params(self) -> Dict[str, str]:
+        return {"access_token": self.token}
 
-    def get_reference_data(self):
-        url = f"{self.base_url}/api/reference-data"
-        response = self.session.get(url, params=self._auth_params())
-        if response.ok:
-            return response.json()
-        raise ConnectionError(f"Erro ao buscar dados de referência: {response.status_code}")
+    def _request(self, method: str, endpoint: str, **kwargs) -> Any:
+        """Executa uma requisição HTTP genérica com tratamento de erros padrão."""
+        url = f"{self.base_url}{endpoint}"
+        params = kwargs.pop("params", {})
+        params.update(self._auth_params())
 
-    def get_cases(self, outbreak_id: str):
-        url = f"{self.base_url}/api/outbreaks/{outbreak_id}/cases"
-        response = self.session.get(url, params=self._auth_params())
-        if response.ok:
-            return response.json()
-        raise ConnectionError(f"Erro ao buscar casos: {response.status_code}")
+        logger.debug(f"Requisição {method.upper()} → {url} com params={params} e kwargs={kwargs}")
 
-    def post_case(self, outbreak_id: str, case_data: dict):
-        url = f"{self.base_url}/api/outbreaks/{outbreak_id}/cases"
-        response = self.session.post(url, json=case_data, params=self._auth_params())
-        if response.ok:
-            return response.json()
-        raise ConnectionError(f"Falha ao adicionar caso: {response.status_code}")
+        try:
+            response = self.session.request(method, url, params=params, timeout=20, **kwargs)
+            response.raise_for_status()
+            logger.debug(f"Resposta {response.status_code}: {response.text[:200]}...")
+            return response.json() if response.text else None
+        except requests.RequestException as e:
+            logger.error(f"Erro ao executar requisição {method.upper()} em {url}: {e}")
+            raise GoDataApiError(str(e)) from e
 
+    # --- Métodos públicos da API ---
+
+    def get_outbreaks(self) -> Any:
+        return self._request("GET", "/api/outbreaks")
+
+    def get_reference_data(self) -> Any:
+        return self._request("GET", "/api/reference-data")
+
+    def get_cases(self, outbreak_id: str) -> Any:
+        return self._request("GET", f"/api/outbreaks/{outbreak_id}/cases")
+
+    def post_case(self, outbreak_id: str, case_data: dict) -> Any:
+        return self._request("POST", f"/api/outbreaks/{outbreak_id}/cases", json=case_data)

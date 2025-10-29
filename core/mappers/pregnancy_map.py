@@ -1,4 +1,4 @@
-from .registry import TranslationRegistry
+from .translation_registry import TranslationRegistry
 
 PREGNANCY_MAP = {
     "1": "LNG_REFERENCE_DATA_CATEGORY_PREGNANCY_STATUS_YES_FIRST_TRIMESTER",
@@ -8,7 +8,6 @@ PREGNANCY_MAP = {
     "5": "LNG_REFERENCE_DATA_CATEGORY_PREGNANCY_STATUS_NOT_PREGNANT",
     "6": "LNG_REFERENCE_DATA_CATEGORY_PREGNANCY_STATUS_NONE",
     "9": "LNG_REFERENCE_DATA_CATEGORY_PREGNANCY_STATUS_NONE",
-    "": "",
 }
 
-TranslationRegistry.register("pregnancy_status", PREGNANCY_MAP)
+TranslationRegistry.register("pregnancy_status", PREGNANCY_MAP, default_value=PREGNANCY_MAP["9"])

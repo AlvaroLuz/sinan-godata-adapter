@@ -47,7 +47,6 @@ class DuplicateKeys:
 class SinanCase:
     #default do sinan
     visualId: str
-    outbreakId: str
     firstName: str
     gender: str
     pregnancyStatus: str
@@ -59,6 +58,7 @@ class SinanCase:
     updatedAt: datetime
     questionnaireAnswers: Dict[str, List[Dict[str, Any]]]
     dateOfOnset: Optional[datetime]
+    outbreakId: Optional[str] = None
     lastName: Optional[str] = None
     age: Optional[Age] = None#Optional[Dict[str, int]] = None
     dob: Optional[datetime] = None
