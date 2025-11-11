@@ -7,6 +7,7 @@ from core.adapters import GodataAuth, GodataApiClient
 from core.sinan_processor import Processor, SinanDataProcessor
 from core.add_sinan_case import AddSinanCaseService
 from core.sinan_case_mapper import SinanCaseMapper
+from core.location_solver import LocationSolver
 from core.logger import logger  
 from dotenv import load_dotenv
 
@@ -40,18 +41,26 @@ def run_pipeline(disease_name, repository):
     disease_processor = processor()
     #df = disease_processor.run(df)
     logger.info("Processamento específico concluído.")
+    
+    #configurando cliente da API
+    auth = GodataAuth(API_URL, API_TOKEN)
+    token = auth.login(username=API_USERNAME, password=API_PASSWORD)
+    api_client = GodataApiClient(base_url=API_URL, token=token, session=auth.session)
+
+    #resolver localizações
+    location_solver = LocationSolver(api_client)
+    location_solver.run(df)
 
     #mapeamento dos dados
     mapper = SinanCaseMapper(questionnaire_mapping=disease_module.QUESTIONNAIRE_MAPPING)
     cases = mapper.run(df)
     
-    
+    adapter= mapper.adapter
+    with open("./data/output/cases_debug.json", "w") as f:
+        for case in cases:
+            f.write(adapter.dump_json(case, indent=2).decode())
+            f.write(",\n")
 
-    #configurando cliente da API
-    auth = GodataAuth(API_URL, API_TOKEN)
-    token = auth.login(username=API_USERNAME, password=API_PASSWORD)
-    api_client = GodataApiClient(base_url=API_URL, token=token, session=auth.session)
-    
     service = AddSinanCaseService(api_client, disease_module.QUESTIONNAIRE_MAPPING)
     #service.run(cases)
     # try:
@@ -65,4 +74,4 @@ def run_pipeline(disease_name, repository):
 
 
 if __name__ == "__main__":
-    run_pipeline("sarampo", "data/input/Sarampo.xlsx")
+    run_pipeline("sarampo", "data/input/base_enxant.xlsx")

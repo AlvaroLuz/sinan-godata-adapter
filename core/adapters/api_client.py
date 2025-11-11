@@ -50,6 +50,9 @@ class GodataApiClient:
 
     def get_cases(self, outbreak_id: str) -> Any:
         return self._request("GET", f"/api/outbreaks/{outbreak_id}/cases")
-
+    
+    def get_locations(self, filter_params: Optional[Dict[str, str]] = None) -> Any:
+        return self._request("GET", "/api/locations/hierarchical", params=filter_params or {})
+    
     def post_case(self, outbreak_id: str, case_data: dict) -> Any:
         return self._request("POST", f"/api/outbreaks/{outbreak_id}/cases", json=case_data)
