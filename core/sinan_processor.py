@@ -5,121 +5,168 @@ from datetime import datetime
 from .logger import logger
 from .utils import string_to_iso_utc
 from .mappers.translation_registry import TranslationRegistry
-
+from .mappers.residence_mapper import ResidenceMapper
 class Processor(ABC):
     @abstractmethod
     def run(self, df: pd.DataFrame) -> pd.DataFrame :
         pass
 
 class SinanDataProcessor(Processor):
-     
+    def __init__(self, residence_mapper: ResidenceMapper):
+        # =====================================================
+        # === CONFIGURAÇÕES DE TRADUÇÕES ======================
+        # =====================================================
+        self.translations = {
+            "CS_SEXO": {
+                "mapping": lambda x: TranslationRegistry.translate("gender", x),
+            },
+            "CS_GESTANT": {
+                "mapping": lambda x: TranslationRegistry.translate("pregnancy", x),
+            },
+            "CLASSIFICAÇÃO FINAL": {
+                "mapping": lambda x: TranslationRegistry.translate("classification", x),
+            },
+            "TIPO DE DOCUMENTO": {
+                "mapping": lambda x: TranslationRegistry.translate("document_type", "CNS") if x else None,
+                "source_column": "ID_CNS_SUS",
+            },
+            "Endereço_Atual": {
+                "mapping": lambda x: TranslationRegistry.translate("address_type", "Endereço Atual"),
+            },
+            "MUNICIPIO RESIDÊNCIA": {
+                "mapping": lambda x: residence_mapper.get_municipio(x),
+                "source_column": "ID_MN_RESI",
+            },
+            "UF RESIDÊNCIA": {
+                "mapping": lambda x: residence_mapper.get_uf(x),
+                "source_column": "ID_MN_RESI",
+            },
+        }
+
+        # =====================================================
+        # === CONFIGURAÇÕES DE OUTROS TRATAMENTOS =============
+        # =====================================================
+        self.treatments = {
+            "DT_NASC": self._process_birth_date,
+            "IDADE": self._calculate_age,
+            "DT_SIN_PRI": self._convert_date_iso,
+            "DT_NOTIFIC": self._convert_date_iso,
+            "ENDEREÇO COMPLETO": self._build_full_address,
+            "Atualizado_em": self._insert_timestamp,
+        }
+
     # =====================================================
     # === MÉTODO PRINCIPAL ================================
     # =====================================================
-
-    def run(self, df: pd.DataFrame) -> pd.DataFrame:
+    def run(self, df: pd.DataFrame, anonymous_data=False) -> pd.DataFrame:
         logger.info("Iniciando tratamento padrão dos dados")
 
-        df = df.copy()
-        #remover linhas sem numero de notificacao
-        df = df.dropna(subset=["NU_NOTIFIC"])
-        #remover valores nan
-        df = df.fillna("")
-        
-        #traduzindo dados do csv para palavras-chave do godata
-        self._translate_keywords(df)
-        
-        #processar dados especificos
-        self._process_birth_date(df)
-        self._process_notification_dates(df)
-        self._build_full_address(df)
-        
-        #inserir timestamp de atualizacao
-        self._insert_timestamp(df)
+        # Etapa 0: pré-processamento
+        self._preprocess(df, anonymous_data=anonymous_data)
+
+        # Etapa 1: traduções
+        self._apply_translations(df)
+
+        # Etapa 2: tratamentos definidos
+        for col, func in self.treatments.items():
+            if func.__code__.co_argcount > 2:
+                func(df, col)
+            else:
+                func(df)
 
         logger.info("Tratamento padrão dos dados concluído")
         return df
-    
+
 
     # =====================================================
-    # === MÉTODOS AUXILIARES ==============================
+    # === PRÉ-PROCESSAMENTO ===============================
     # =====================================================
-    def _translate_keywords(self, df: pd.DataFrame) -> None:
-        normalization_map = {
-            "CS_SEXO": {
-                "registry_key": "gender",
-            },
-            "CS_GESTANT": {
-                "registry_key": "pregnancy_status",
-            },
-            "CLASSIFICAÇÃO FINAL": {
-                "registry_key": "classification",
-            },
-            
-        }
+    def _preprocess(self, df: pd.DataFrame, anonymous_data: bool = False) -> None:
+        # 1. Normalizar valores ausentes
+        mask = df.isin(["NA", ""])
+        df.where(~mask, pd.NA, inplace=True)
+        #df.fillna("", inplace=True)
 
-        for col, cfg in normalization_map.items():
-            if col not in df.columns:
-                continue
-        
-            newvalue = df[col].apply(
-                lambda value: TranslationRegistry.translate(cfg["registry_key"], value)
-            )
-
-            if "target" in cfg:
-                df[cfg["target"]] = newvalue
-            else: 
-                df[col] = newvalue
-        
-        df["Endereço_Atual"] = TranslationRegistry.translate("address_type", "Endereço Atual")
-        
-        df["TIPO DE DOCUMENTO"] = df["ID_CNS_SUS"].apply(
-            lambda x: 
-                pd.NA if x=="" else  TranslationRegistry.translate("document_type", "CNS")
-        )
-
-    #funcoes que processam os dados
-    def _process_birth_date(self, df: pd.DataFrame) -> None:
-        if "DT_NASC" not in df.columns:
-            df["DT_NASC"] = None
-            #descomentar essa linha quando estiver usando dados não anonimizados
-            #df["IDADE"] = None
-            return
-
-        df["DT_NASC"] = pd.to_datetime(df["DT_NASC"], errors="coerce")
-        df["IDADE"] = self._calculate_age(df["DT_NASC"])
-        df["DT_NASC"] = df["DT_NASC"].dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
-
-    def _process_notification_dates(self, df: pd.DataFrame) -> None:
-        for col in ("DT_SIN_PRI", "DT_NOTIFIC"):
-            if col in df.columns:
-                df[col] = df[col].apply(string_to_iso_utc)
-
-    def _build_full_address(self, df: pd.DataFrame) -> None:
-        required_cols = ["NM_BAIRRO", "NM_LOGRADO", "NU_NUMERO", "NM_COMPLEM"]
-        
-        for col in required_cols:
+        # 2. Garantir que as colunas existem
+        personal_cols = ["NM_PACIENT", "NU_CEP", "NU_TELEFON", "ID_CNS_SUS", "Endereço_Atual"]
+        for col in personal_cols:
             if col not in df.columns:
                 df[col] = ""
-        
-        df["ENDEREÇO COMPLETO"] = (
-            df[required_cols]
-            .fillna("")
-            .agg(", ".join, axis=1)
-            .str.strip(", ")
-        )
 
-    def _calculate_age(self, birth_dates: pd.Series) -> pd.Series:
+        # 3. Anonimização (se solicitada)
+        if anonymous_data:
+            placeholder_values = {
+                "NM_PACIENT": "Paciente Anônimo",
+                "NU_CEP": "00000-000",
+                "NU_TELEFON": "(00)0000-0000",
+                "ID_CNS_SUS": "000000000000000",
+                "DT_NASC": datetime(2000, 1, 1),
+            }
+            for col, value in placeholder_values.items():
+                df[col] = value
+
+
+    # =====================================================
+    # === TRATAMENTO DE TRADUÇÕES =========================
+    # =====================================================
+    def _apply_translations(self, df: pd.DataFrame) -> None:
+        for target_col, cfg in self.translations.items():
+            mapping = cfg["mapping"]
+            source_col = cfg.get("source_column", target_col)
+
+            df[target_col] = df[source_col].apply(mapping)
+
+
+    # =====================================================
+    # === TRATAMENTOS DE DATAS =============================
+    # =====================================================
+    def _convert_date_iso(self, df: pd.DataFrame, col: str) -> None:
+        if col in df.columns:
+            df[col] = df[col].apply(string_to_iso_utc)
+
+
+    def _process_birth_date(self, df: pd.DataFrame, col="DT_NASC") -> None:
+        if col not in df.columns:
+            df[col] = ""
+            return
+        df[col] = pd.to_datetime(df[col], errors="coerce")
+        #df[col] = df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+        
+    def _process_age(self, df: pd.DataFrame, col="IDADE") -> None:
+        birthday_col = "DT_NASC"
+        if birthday_col not in df.columns:
+            df[col] = pd.NA
+            return
+
+        df[col] = df[birthday_col].apply(self._calculate_age)
+
+
+    def _calculate_age(self, birth_date) -> int:
+        if not isinstance(birth_date, (pd.Timestamp, datetime)):
+            try:
+                birth_date = pd.to_datetime(birth_date, errors="coerce")
+            except Exception:
+                return pd.NA
+            
         today = pd.Timestamp.today()
-        return ((today - birth_dates).dt.days / 365.25).round().astype("Int64")
-    
-    #timestamp simples
-    def _insert_timestamp(self, df: pd.DataFrame) -> None:
-        df["Atualizado_em"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        delta = today - birth_date
+        return int(round(delta.days / 365.25))
 
-    
-    #     #------ não precisa de tratamento ------------  ----
-    #     # (dados pessoais)- talvez garantir que não fique nulo
-    #     # "NM_PACIENT", "NU_CEP", "NU_TELEFON","ID_CNS_SUS" 
-    #     # ------------------------------------------------
-        
+
+    # =====================================================
+    # === COMPOSIÇÃO DE CAMPOS =============================
+    # =====================================================
+    def _build_full_address(self, df: pd.DataFrame, col="ENDEREÇO COMPLETO") -> None:
+        required_cols = ["NM_BAIRRO", "NM_LOGRADO", "NU_NUMERO", "NM_COMPLEM"]
+        for c in required_cols:
+            if c not in df.columns:
+                df[c] = ""
+        df[col] = df[required_cols].fillna("").agg(", ".join, axis=1).str.strip(", ")
+
+
+    # =====================================================
+    # === CAMPOS DE METADADOS ==============================
+    # =====================================================
+    def _insert_timestamp(self, df: pd.DataFrame, col="Atualizado_em") -> None:
+        df[col] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")

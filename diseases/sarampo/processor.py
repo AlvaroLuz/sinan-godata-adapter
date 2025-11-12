@@ -19,7 +19,6 @@ class DiseaseProcessor:
             str: data no formato 'YYYY-MM-DDTHH:MM:SS.mmmZ'
         """
 
-        
         date_str = date_str.strip()
         
         if date_str == "" or date_str is None or date_str.lower() == "nan":
@@ -53,12 +52,23 @@ class DiseaseProcessor:
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         # Implement disease-specific processing here
         # "outcomeId": "EVOLUCAO",
-
+        df.fillna("", inplace=True)
         data_columns = ["DT_COL_1", "DT_COL_2", "DT_INICIO_", "DT_FEBRE"]
+
         for col in data_columns:
             if col in df.columns:
                 df[col] = df[col].apply(self.string_to_iso_utc) 
                 
+        # --- Criar coluna CLASSIFICACAO_FINAL ---
+        # "CLASSIFICAÇÃO FINAL",
+        classificacao_final_map = {
+            "1": "Confirmado", 
+            "2": "Confirmado", 
+            "3": "Descartado", 
+            "": ""
+        }
+        df["CLASSIFICAÇÃO FINAL"] = df["EVOLUCAO"].map(classificacao_final_map).fillna("")
+        
         evolucao_map = {
             "1": "CURA",
             "2": "ÓBITO POR DOENÇA EXANTEMÁTICA",
@@ -67,9 +77,5 @@ class DiseaseProcessor:
             "": ""
         } 
         df["EVOLUCAO"] = df["EVOLUCAO"].map(evolucao_map).fillna("")
-        # --- Criar coluna CLASSIFICACAO_FINAL ---
-        # "CLASSIFICAÇÃO FINAL",
-        classificacao_final_map = {"1": "Confirmado", "2": "Confirmado", "3": "Descartado", "": ""}
-        df["CLASSIFICACAO_FINAL"] = df["EVOLUCAO"].map(classificacao_final_map).fillna("")
 
         return df

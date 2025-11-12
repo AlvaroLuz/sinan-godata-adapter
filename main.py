@@ -9,6 +9,7 @@ from core.add_sinan_case import AddSinanCaseService
 from core.sinan_case_mapper import SinanCaseMapper
 from core.location_solver import LocationSolver
 from core.logger import logger  
+from core.mappers import ResidenceMapper
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,6 +21,7 @@ API_USERNAME = os.getenv("API_USERNAME")
 API_PASSWORD = os.getenv("API_PASSWORD")
 
 
+
 def run_pipeline(disease_name, repository):
     logger.info("Iniciando pipeline para a doença: %s", disease_name)
     disease_module = importlib.import_module(f"diseases.{disease_name}")
@@ -29,18 +31,22 @@ def run_pipeline(disease_name, repository):
     logger.info("Lendo dados do repositório: %s", repository)
     df = pd.read_excel(repository, nrows=lines_to_treat,dtype=str)
     logger.info("Dados lidos com sucesso: %s linhas", len(df))
-
-
-    #processamento padrao dos dados
-    standard_processor = SinanDataProcessor()
-    df = standard_processor.run(df)
-
+    
     #processamento especifico da doença
     logger.info("Iniciando processamento específico para a doença: %s", disease_name)
     processor = Processor.register(disease_module.DiseaseProcessor)
     disease_processor = processor()
-    #df = disease_processor.run(df)
+    df = disease_processor.run(df)
     logger.info("Processamento específico concluído.")
+    
+    residence_mapper = ResidenceMapper("data/input/Dic_Mun_Res.xlsx")
+    
+    #processamento padrao dos dados
+    standard_processor = SinanDataProcessor(residence_mapper=residence_mapper)
+    df = standard_processor.run(df, anonymous_data=True)
+    
+    # df.to_csv("./data/output/processed_data.csv", index=False)
+    # return
     
     #configurando cliente da API
     auth = GodataAuth(API_URL, API_TOKEN)

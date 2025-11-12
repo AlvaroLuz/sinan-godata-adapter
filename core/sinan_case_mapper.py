@@ -7,7 +7,7 @@ from .logger import logger
 
 class SinanCaseMapper:
     _DEFAULTS: dict[str, Any] = {
-        "NM_PACIENT": "Lorem Ipsum",
+        "NM_PACIENT": "",
         "CS_SEXO": "",
         "CS_GESTANT": "",
         "IDADE": None,
