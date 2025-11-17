@@ -1,7 +1,7 @@
 import pandas as pd
 from .logger import logger
 
-class LocationSolver:
+class GodataLocationTranslator:
     def __init__(self, api_client):
         self.api_client = api_client
         self.uf_map = {

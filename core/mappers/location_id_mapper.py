@@ -1,6 +1,6 @@
 import pandas as pd
 
-class ResidenceMapper:
+class LocationIdMapper:
     """
     Classe para mapear códigos de município e UF (unidade federativa)
     para seus respectivos nomes, com base em um dicionário Excel.

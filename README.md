@@ -46,14 +46,14 @@ O código é especialmente projetado para uso em servidores Linux Ubuntu 22.04.
 
 ```
 .
-├── core/                       # Módulos centrais do sistema
-│   ├── adapters/               # Comunicação com API (GoData)
-│   ├── mappers/                # Classes de tradução 
-│   ├── sinan_processor.py      # Pipeline de processamento SINAN
-│   ├── sinan_case_mapper.py    # Mapeador de dados para classe
-│   ├── location_solver.py      # Resolve ids de municípios para id de localização
+├── core/                               # Módulos centrais do sistema
+│   ├── adapters/                       # Comunicação com API (GoData)
+│   ├── mappers/                        # Classes de tradução 
+│   ├── sinan_processor.py              # Pipeline de processamento SINAN
+│   ├── sinan_case_mapper.py            # Mapeador de dados para classe
+│   ├── godata_location_translator.py   # Resolve ids de municípios para id de localização
 │   ├── utils.py
-│   └── entities.py             # Estruturas de dados centrais
+│   └── entities.py                     # Estruturas de dados centrais
 │
 ├── diseases/              # Módulos de tratamento específicos por doença
 │   ├── sarampo/

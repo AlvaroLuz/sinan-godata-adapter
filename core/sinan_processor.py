@@ -5,14 +5,14 @@ from datetime import datetime
 from .logger import logger
 from .utils import string_to_iso_utc
 from .mappers.translation_registry import TranslationRegistry
-from .mappers.residence_mapper import ResidenceMapper
+from .mappers.location_id_mapper import LocationIdMapper
 class Processor(ABC):
     @abstractmethod
     def run(self, df: pd.DataFrame) -> pd.DataFrame :
         pass
 
 class SinanDataProcessor(Processor):
-    def __init__(self, residence_mapper: ResidenceMapper):
+    def __init__(self, residence_mapper: LocationIdMapper):
         # =====================================================
         # === CONFIGURAÇÕES DE TRADUÇÕES ======================
         # =====================================================
