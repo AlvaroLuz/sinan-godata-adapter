@@ -1,24 +1,25 @@
-from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pydantic import TypeAdapter
-from .adapters.api_client import GodataApiClient
-from .entities import SinanCase
-from .logger import logger
+from typing import List
 
+from core.domain.models import GoDataCase
+from core.domain.ports import CasesOutputPort
+from core.infra.client import GodataApiClient
 
+from core.logger import logger
 
-class AddSinanCaseService:
+class CaseUploader(CasesOutputPort):
     def __init__(self, api_client: GodataApiClient, questionnaire_mapping: dict, max_workers: int = 5):
         self.api_client = api_client
         self.questionnaire_mapping = questionnaire_mapping
-        self.type_adapter = TypeAdapter(SinanCase)
+        self.type_adapter = TypeAdapter(GoDataCase)
         self.max_workers = max_workers
 
-    def _serialize_case(self, caso: SinanCase) -> str:
+    def _serialize_case(self, caso: GoDataCase) -> str:
         """Converte o caso em JSON usando Pydantic"""
         return self.type_adapter.dump_json(caso)
 
-    def _send_case(self, caso: SinanCase) -> dict:
+    def _send_case(self, caso: GoDataCase) -> dict:
         """Envia um caso individual para a API e retorna o resultado"""
         try:
             case_json = self._serialize_case(caso)
@@ -37,7 +38,7 @@ class AddSinanCaseService:
                 "error_message": str(e),
             }
 
-    def run(self, casos: List[SinanCase]) -> List[dict]:
+    def send_cases(self, casos: List[GoDataCase]) -> List[dict]:
         """Executa envio de casos em paralelo"""
         results = []
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:

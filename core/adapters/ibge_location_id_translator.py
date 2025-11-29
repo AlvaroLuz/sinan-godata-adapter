@@ -1,6 +1,7 @@
+from typing import Tuple
 import pandas as pd
 
-class LocationIdMapper:
+class IBGEIdTranslator:
     """
     Classe para mapear códigos de município e UF (unidade federativa)
     para seus respectivos nomes, com base em um dicionário Excel.
@@ -37,5 +38,9 @@ class LocationIdMapper:
     def get_uf(self, codigo: str) -> str:
         """Retorna o nome da UF dado o código."""
         return self.ufs.get(codigo, "")
+    
+    def get_location(self, codigo: str) -> Tuple[str, str]:
+        """Retorna o nome do município e da UF dado o código."""
+        return self.get_municipio(codigo), self.get_uf(codigo)
     
 

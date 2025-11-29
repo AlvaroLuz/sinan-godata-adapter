@@ -1,0 +1,1 @@
+from disease_registry import disease_registry

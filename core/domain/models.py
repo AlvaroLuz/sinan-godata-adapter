@@ -1,13 +1,7 @@
 from __future__ import annotations
 from pydantic.dataclasses import dataclass
-from pydantic import TypeAdapter
 from datetime import datetime
-from enum import Enum
 from typing import List, Optional, Dict, Any
-
-import os
-import json
-
 
 
 @dataclass
@@ -33,18 +27,23 @@ class Address:
     geoLocation: Optional[Dict[str, float]] = None
 
 
-
 @dataclass
 class DuplicateKeys:
     document: List[Any]
     name: List[Any]
+
+#classe meramente simbólica
+#será usada para representar IDs do IBGE nos dados dos módulos dos agravos
+@dataclass
+class IBGEId:
+    ...
 
 
 # ===== Estrutura principal ===== #
 
 
 @dataclass
-class SinanCase:
+class GoDataCase:
     #default do sinan
     visualId: str
     firstName: str
@@ -60,7 +59,7 @@ class SinanCase:
     dateOfOnset: Optional[datetime]
     outbreakId: Optional[str] = None
     lastName: Optional[str] = None
-    age: Optional[Age] = None#Optional[Dict[str, int]] = None
+    age: Optional[Age] = None
     dob: Optional[datetime] = None
     #Opcionais 
     transferRefused: Optional[bool] = False
@@ -80,9 +79,27 @@ class SinanCase:
     numberOfExposures: Optional[int] = None
 
 
-# ===== Exportar para JSON ===== #
+@dataclass
+class SinanCase:
+    nu_notific: str
+    #==== dados pessoais ====#
+    nm_pacient: str
+    dt_nasc: datetime
+    cs_sexo: str
+    cs_gestant: str
+    nu_telefon: str
+    #==== endereço ====#
+    nu_cep: str
+    municipio_residencia: str
+    #==== dados clínicos ====#
+    evolucao: str
+    classificacao_final: str
+    dt_notific: datetime
+    #==== dados opcionais ====#
+    id_cns_sus: Optional[str] = None
+    nm_bairro: Optional[str] = None
+    nm_logrado: Optional[str] = None
+    nu_numero: Optional[str] = None
+    nm_complemento: Optional[str] = None
+    dt_sin_pri: Optional[datetime] = None
 
-# adapter = TypeAdapter(DefaultCase)
-# json_str = adapter.dump_json(default_case, indent=4).decode()
-
-# print(json_str)

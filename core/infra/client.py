@@ -1,8 +1,7 @@
-import logging
+from core.logger import logger
 import requests
 from typing import Any, Dict, Optional
 
-logger = logging.getLogger(__name__)
 
 
 class GoDataApiError(Exception):
