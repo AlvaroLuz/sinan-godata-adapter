@@ -39,7 +39,7 @@ class DiseaseRegistry:
       - OUTCOME_MAP
     """
 
-    def __init__(self, module_package: str = "modules"):
+    def __init__(self, module_package: str = "core.domain.diseases.modules"):
         self.module_package = module_package
         self._registry: Dict[str, DiseaseModuleSpec] = {}
         self.load_all_modules()

@@ -9,9 +9,8 @@ from core.infra.client import GodataApiClient
 from core.logger import logger
 
 class CaseUploader(CasesOutputPort):
-    def __init__(self, api_client: GodataApiClient, questionnaire_mapping: dict, max_workers: int = 5):
+    def __init__(self, api_client: GodataApiClient, max_workers: int = 5):
         self.api_client = api_client
-        self.questionnaire_mapping = questionnaire_mapping
         self.type_adapter = TypeAdapter(GoDataCase)
         self.max_workers = max_workers
 

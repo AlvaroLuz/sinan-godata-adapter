@@ -1,0 +1,3 @@
+from .disease_mapper import DiseaseMapperService
+from .godata_mapper import GoDataMapperService
+from .sinan_mapper import SinanMapperService

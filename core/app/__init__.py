@@ -1,6 +1,6 @@
-from core.app.services import( 
+from .services import( 
     Preprocessor
 )
-from core.app.use_cases import (
+from .use_cases import (
     ImportSinanDataUseCase
 )

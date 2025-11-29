@@ -1,7 +1,7 @@
 from typing import Tuple
 import pandas as pd
 
-class IBGEIdTranslator:
+class IBGELocationIdTranslator:
     """
     Classe para mapear códigos de município e UF (unidade federativa)
     para seus respectivos nomes, com base em um dicionário Excel.

@@ -9,7 +9,8 @@ from core.adapters import (
     XlsxReader,
     GodataLocationTranslator,
     IBGELocationIdTranslator,
-    CaseUploader
+    CaseUploader,
+    CaseJsonWriter
 )
 
 from core.app.use_cases import (
@@ -30,11 +31,15 @@ if __name__ == "__main__":
 
     xlsx_path = "data/input/base_enxant.xlsx"
     ibge_dictionary_path = "./data/input/Dic_Mun_Res.xlsx"
+
+    
     use_case = ImportSinanDataUseCase(
+        disease_name="sarampo",
         input_port=XlsxReader(file_path=xlsx_path),
         godata_location_translator=GodataLocationTranslator(api_client=api_client),
-        ibge_location_id_translator=IBGELocationIdTranslator(dictionary_path=ibge_dictionary_path),
-        case_uploader=CaseUploader(api_client=api_client)
+        ibge_location_translator=IBGELocationIdTranslator(dictionary_path=ibge_dictionary_path),
+        output_port=CaseJsonWriter(file_path="data/output/cases.json")
+        #output_port=CaseUploader(api_client=api_client)
     )
 
-    use_case.execute(disease_name="sarampo")
+    use_case.execute(anonymize=True)

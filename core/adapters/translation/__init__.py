@@ -3,5 +3,4 @@ from core.adapters.translation import (
     gender_map, 
     document_map, 
     address_type_map,
-    classification_map,
 )

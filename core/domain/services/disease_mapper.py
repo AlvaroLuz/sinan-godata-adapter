@@ -1,9 +1,10 @@
 import pandas as pd
 from datetime import datetime
 from typing import Dict, Any
-from core.domain.diseases.disease_registry import disease_registry
 from dataclasses import fields
+
 from core.domain.models import IBGEId
+from core.domain.diseases.disease_registry import disease_registry
 
 class DiseaseMapperService:
     def __init__(self, disease_name: str):

@@ -6,7 +6,8 @@ class TranslationRegistry:
         # Ex: {"gender": translator_fn}
         self._registry: Dict[str, Callable[[Any], Any]] = {}
 
-    def register(self, name: str, translator: Callable[[Any], Any]):
+    
+    def register(self, name: str, mapping: Callable[[Any], Any]):
         """
         Registra um tradutor no registry.
 
@@ -14,23 +15,23 @@ class TranslationRegistry:
         - um map/dict simples
         - um callable
         """
-        if isinstance(translator, dict):
-            translator = self._wrap_dict_translator(translator)
+        if isinstance(mapping, dict):
+            mapping = self._wrap_dict_translator(mapping)
 
-        if not callable(translator):
+        if not callable(mapping):
             raise ValueError(f"Translator for '{name}' is not callable or dict.")
 
-        self._registry[name] = translator
+        self._registry[name] = mapping
 
     def translate(self, name: str, value: Any) -> Any:
         """
         Aplica o tradutor adequado.
         Se não existir, retorna o valor original.
         """
-        translator = self._registry.get(name)
-        if translator is None:
+        mapping = self._registry.get(name)
+        if mapping is None:
             return value
-        return translator(value)
+        return mapping(value)
 
     @staticmethod
     def _wrap_dict_translator(mapper: Dict[Any, Any]):
