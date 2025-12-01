@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 
 
-class GoDataApiError(Exception):
+class GodataApiError(Exception):
     """Exceção personalizada para erros da API Go.Data."""
     pass
 
@@ -37,7 +37,7 @@ class GodataApiClient:
             return response.json() if response.text else None
         except requests.RequestException as e:
             logger.error(f"Erro ao executar requisição {method.upper()} em {url}: {e}")
-            raise GoDataApiError(str(e)) from e
+            raise GodataApiError(str(e)) from e
 
     # --- Métodos públicos da API ---
 
@@ -55,3 +55,6 @@ class GodataApiClient:
     
     def post_case(self, outbreak_id: str, case_data: dict) -> Any:
         return self._request("POST", f"/api/outbreaks/{outbreak_id}/cases", json=case_data)
+
+    def put_case(self, outbreak_id: str, case_id: str, case_data: dict) -> Any:
+        return self._request("PUT", f"/api/outbreaks/{outbreak_id}/cases/{case_id}", json=case_data)

@@ -10,7 +10,7 @@ class XlsxReader(DataframeReader):
 
     def read_dataframe(self) -> pd.DataFrame:
         try:
-            df = pd.read_excel(self.file_path, nrows=self.n_rows)
+            df = pd.read_excel(self.file_path, nrows=self.n_rows,dtype=str)
             logger.info("XLSX lido com sucesso: %s linhas", len(df))
         except Exception as e:
             logger.error("Erro ao ler o XLSX: %s", e)

@@ -7,13 +7,11 @@ class Preprocessor:
     Classe responsável pelo pré-processamento de DataFrames,
     incluindo normalização de valores ausentes e anonimização de dados sensíveis.
     """
-    def __init__(self):
-        pass
     def run(self, df: pd.DataFrame, anonymize_data: bool) -> pd.DataFrame:
             # 1. Normalizar valores ausentes
-            mask = df.isin(["NA", "", None])
-            df.where(~mask, "", inplace=True)
+            
             df = df.fillna("")
+
             # 2. Anonimização (se solicitada)
             if anonymize_data:
                 logger.info("Anonimizando dados sensíveis")

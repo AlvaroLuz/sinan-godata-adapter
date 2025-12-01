@@ -1,2 +1,2 @@
-from core.infra.auth import GodataAuth
-from core.infra.client import GodataApiClient
+from .auth import GodataAuth
+from .client import GodataApiClient

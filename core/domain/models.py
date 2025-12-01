@@ -2,7 +2,7 @@ from __future__ import annotations
 from pydantic.dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-
+from dataclasses import field
 
 @dataclass
 class Document:
@@ -43,40 +43,39 @@ class IBGEId:
 
 
 @dataclass
-class GoDataCase:
+class GodataCase:
     #default do sinan
-    visualId: str
+    addresses: List[Address]
+    classification: str
+    dateOfOnset: Optional[str]
+    dateOfReporting: str
+    documents: List[Document]
     firstName: str
     gender: str
-    pregnancyStatus: str
-    documents: List[Document]
-    addresses: List[Address]
+    outbreakId: str
     outcomeId: str
-    classification: str
-    dateOfReporting: datetime
-    updatedAt: datetime
+    pregnancyStatus: str
     questionnaireAnswers: Dict[str, List[Dict[str, Any]]]
-    dateOfOnset: Optional[datetime]
-    outbreakId: Optional[str] = None
-    lastName: Optional[str] = None
-    age: Optional[Age] = None
-    dob: Optional[datetime] = None
-    #Opcionais 
-    transferRefused: Optional[bool] = False
+    updatedAt: str
+    usualPlaceOfResidenceLocationId: str 
+    visualId: str
+    #default
+    active: bool = True
+    #age: Optional[Age] = None
+    address: Dict[str, Any] = field(default_factory=dict)
+    #classificationHistory: Optional[List[Any]] = None
+    dateRanges: Optional[List[Any]] = field(default_factory=list)
+    dob: Optional[str] = None
     duplicateKeys: Optional[DuplicateKeys] = DuplicateKeys(document=[], name=[])
-    dateRanges: Optional[List[Any]] = None
-    classificationHistory: Optional[List[Any]] = None
-    wasContact: Optional[bool] = False
+    hasRelationships: Optional[bool] = False
+    numberOfContacts: Optional[int] = 0
+    numberOfExposures: Optional[int] = 0
+    transferRefused: Optional[bool] = False
     safeBurial: Optional[bool] = False
-    riskLevel: Optional[str] = None
-    occupation: Optional[str] = None
-    vaccinesReceived: Optional[List[Any]] = None
-    dateOfOutcome: Optional[datetime] = None
-    hasRelationships: Optional[bool] = None
-    locations: Optional[List[Any]] = None
-    address: Optional[Dict[str, Any]] = None
-    numberOfContacts: Optional[int] = None
-    numberOfExposures: Optional[int] = None
+    vaccinesReceived: Optional[List[Any]] = field(default_factory=list)
+    wasContact: Optional[bool] = False
+    wasContactOfContact: Optional[bool] = False
+
 
 
 @dataclass

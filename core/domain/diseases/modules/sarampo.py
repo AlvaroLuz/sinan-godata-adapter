@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from core.domain.models import IBGEId
 
@@ -35,7 +35,7 @@ QUESTIONNAIRE_MAP = {
     "data_do_inicio_da_febre": "DT_FEBRE",
     "data_do_inicio_do_enxantema_manchas_vermelhas_pelo_corpo": "DT_INICIO_",
     "nome_da_mae": "NM_MAE_PAC",
-    "municipio_de_notificacao": "MUNICIPIO NOTIFICAÇÃO"    
+    "municipio_de_notificacao": "ID_MUNICIP"    
 }
 
 # Registro dos tipos de dados de cada variavel do questionário
@@ -49,8 +49,8 @@ class QuestionnaireAnswers:
     resultado_rubeola_s_1_ig_m_: Optional[str] 
     resultado_sarampo_s1_igg: Optional[str] 
     resultado_sarampo_s_1_ig_m_: Optional[str] 
-    contato_com_caso_suspeito_ou_confirmado_de_sarampo_ou_rubeola_ate_23_dias_antes_do_inicio_dos_sinais_e_sintomas: Optional[str] 
-    tomou_vacina_contra_sarampo_e_rubeola_dupla_triplice_viral_e_tetraviral: Optional[str] 
+    contato_com_caso_suspeito_ou_confirmado_de_sarampo_ou_rubeola_ate_23_dias_antes_do_inicio_dos_sinais_e_sintomas: Optional[List] 
+    tomou_vacina_contra_sarampo_e_rubeola_dupla_triplice_viral_e_tetraviral: Optional[List] 
     nome_da_mae: Optional[str] 
     municipio_de_notificacao: Optional[IBGEId]
     data_da_coleta_s_1: Optional[datetime]
